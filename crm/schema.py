@@ -4,6 +4,8 @@ from .models import Customer, Product, Order
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from crm.schema import Query as CRMQuery, Mutation as CRMMutation
+import re
+from decimal import Decimal
 
 # --------------------
 # Object Types
@@ -155,3 +157,18 @@ class Mutation(CRMMutation, graphene.ObjectType):
     pass
 
 schema = graphene.Schema(query=Query, mutation=Mutation)
+
+# GraphQL Types
+class CustomerType(DjangoObjectType):
+    class Meta:
+        model = Customer
+
+
+class ProductType(DjangoObjectType):
+    class Meta:
+        model = Product
+
+
+class OrderType(DjangoObjectType):
+    class Meta:
+        model = Order
