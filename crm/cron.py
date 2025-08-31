@@ -38,3 +38,38 @@ def log_crm_heartbeat():
     # Append log
     with open("/tmp/crm_heartbeat_log.txt", "a") as f:
         f.write(f"{now} {status}\n")
+
+def update_low_stock():
+    """Executes GraphQL mutation to restock low products and logs results."""
+    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    try:
+        # Setup GraphQL client
+        transport = RequestsHTTPTransport(
+            url="http://localhost:8000/graphql",
+            verify=False,
+            retries=3,
+        )
+        client = Client(transport=transport, fetch_schema_from_transport=True)
+
+        # Define mutation
+        mutation = gql(
+            """
+            mutation {
+              updateLowStockProducts {
+                success
+                updatedProducts
+              }
+            }
+            """
+        )
+
+        result = client.execute(mutation)
+        updated_products = result["updateLowStockProducts"]["updatedProducts"]
+
+        with open("/tmp/low_stock_updates_log.txt", "a") as f:
+            f.write(f"{now} - Updated: {', '.join(updated_products)}\n")
+
+    except Exception as e:
+        with open("/tmp/low_stock_updates_log.txt", "a") as f:
+            f.write(f"{now} - Error: {e}\n")

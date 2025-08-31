@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from crm.schema import Query as CRMQuery, Mutation as CRMMutation
 import re
 from decimal import Decimal
+from crm.models import Product
 
 # --------------------
 # Object Types
@@ -125,6 +126,22 @@ class CreateOrder(graphene.Mutation):
         order.save()
         return CreateOrder(order=order)
 
+class UpdateLowStockProducts(graphene.Mutation):
+    class Arguments:
+        pass  # no arguments needed for now
+
+    success = graphene.Boolean()
+    updated_products = graphene.List(graphene.String)
+
+    def mutate(self, info):
+        updated = []
+        products = Product.objects.filter(stock__lt=10)
+        for product in products:
+            product.stock += 10  # simulate restocking
+            product.save()
+            updated.append(f"{product.name} -> {product.stock}")
+
+        return UpdateLowStockProducts(success=True, updated_products=updated)
 
 # --------------------
 # Query & Mutation root
@@ -149,6 +166,7 @@ class Mutation(graphene.ObjectType):
     bulk_create_customers = BulkCreateCustomers.Field()
     create_product = CreateProduct.Field()
     create_order = CreateOrder.Field()
+    update_low_stock_products = UpdateLowStockProducts.Field()
 
 class Query(CRMQuery, graphene.ObjectType):
     pass
